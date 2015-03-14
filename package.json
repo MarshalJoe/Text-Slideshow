@@ -1,0 +1,17 @@
+{
+  "name": "Twilio",
+  "version": "0.0.0",
+  "description": "A Twilio Nodejs app for running an SMS-powered slideshow",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Joe Marshall",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.12.2",
+    "socket.io": "^1.3.5",
+    "twilio": "^1.11.1"
+  }
+}

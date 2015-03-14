@@ -1,0 +1,7 @@
+`npm init`
+
+`npm install --save socket.io`
+
+`npm install --save twilio`
+
+`npm install --save express`
