@@ -1,3 +1,5 @@
+## Setup
+
 `npm init`
 
 `npm install --save socket.io`
@@ -5,3 +7,106 @@
 `npm install --save twilio`
 
 `npm install --save express`
+
+Let's spin up a basic server. Add Twilio to the mix just because we'll need it in a bit.
+
+````javascript
+var twilio = require('twilio');
+var app = require('express')();
+var http = require('http').Server(app);
+
+app.get('/', function(req, res){
+    res.sendFile(__dirname + '/index.html');
+});
+
+http.listen(3000, function(){
+  console.log('listening on port 3000');
+});
+````
+
+## Using TwiML, The Twilio Markup Language
+
+Now that we've got a server running, let's add some boilerplate to start responding to Twilio webhooks with code that will return a response properly formatted in TwiML, the Twilio Markup Language.
+
+````javascript
+app.post('/message', function(request, response) {
+    // create a TwiML response object. This object helps us generate an XML
+    // string that we will ultimately return as the result of this HTTP request
+    var twiml = new twilio.TwimlResponse();
+ 
+    // prepare the TwiML response
+    twiml.message(function() {
+        this.body('Trust Pound!');
+        this.media('http://i.imgur.com/Act0Q.gif');
+    });
+ 
+    // Render an XML response
+    response.type('text/xml');
+    response.send(twiml.toString());
+});
+````
+
+Install ngrok to expose your localhost to webhooks (let's do it globally).
+
+`sudo npm install -g ngrok`
+
+Enter `ngrok 3000` (since we're using port 3000 for our app) and you should see this on your terminal screen:
+
+![ngrok terminal output screen]()
+
+Now go to your account page and specifically your [phone number index page](https://www.twilio.com/user/account/phone-numbers/incoming). Click on the number you want to use. Make sure there's a picture icon listed under the number indicating that it's MMS-enabled.
+
+Under the "Messaging" dropdown, find the "Request URL" field and put in the (http) URL you copied fromt the ngrok terminal output. Make sure to save your URL.
+
+If you spin up the app with `npm start` and text your number, you should get an Adventure Time GIF in response!
+
+## Storing Incoming Texts
+
+Responding to texts is great &mdash; we'll definitely want to confirm photo submissions with a "Pic received!" message &mdash;  but more critical for our purposes is actually getting information from these incoming texts.
+
+Let's add a couple of lines to our `index.js` so that we can parse the parameters of incoming POST requests, which is how we'll be receiving information texted to our Twilio number.
+
+````javascript
+var bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({ extended: true }));
+````
+
+Then let's examine the `request.body` object to see exactly what we can pull from the text Twilio is POST-ing us.
+
+````javascript
+for (attr in request.body) {
+    console.log(attr);
+}
+````
+
+This is what we print out:
+
+ToCountry
+ToState
+SmsMessageSid
+NumMedia
+ToCity
+FromZip
+SmsSid
+FromState
+SmsStatus
+FromCity
+Body
+FromCountry
+To
+ToZip
+MessageSid
+AccountSid
+From
+ApiVersion
+
+
+
+
+
+
+
+
+
+
