@@ -1,7 +1,8 @@
 var app = require('express')();
-var http = require('http').Server(app);
+var server = require('http').Server(app);
 var twilio = require('twilio');
 var bodyParser = require('body-parser');
+var io = require('socket.io')(server);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -20,19 +21,18 @@ app.post('/message', function(request, response) {
         this.body('Text received!');
     });
 
-    for (attr in request.body) {
-    	console.log(attr);
-    }
-
     console.log("Message: " + request.body.Body);
     console.log(request.body.NumMedia);
-    console.log(request.body.MediaUrl0);
+
+    if (request.body.NumMedia > 0) {
+        io.emit("picture", request.body.MediaUrl0)
+    }
 
     // Render an XML response
     response.type('text/xml');
     response.send(twiml.toString());
 });
 
-http.listen(3000, function(){
+server.listen(3000, function(){
   console.log('listening on port 3000');
 });

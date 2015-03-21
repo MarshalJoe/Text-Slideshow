@@ -13,13 +13,13 @@ Let's spin up a basic server. Add Twilio to the mix just because we'll need it i
 ````javascript
 var twilio = require('twilio');
 var app = require('express')();
-var http = require('http').Server(app);
+var server = require('http').Server(app);
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
-http.listen(3000, function(){
+server.listen(3000, function(){
   console.log('listening on port 3000');
 });
 ````
@@ -82,6 +82,7 @@ for (attr in request.body) {
 
 This is what we print out:
 
+`
 ToCountry
 ToState
 SmsMessageSid
@@ -100,13 +101,96 @@ MessageSid
 AccountSid
 From
 ApiVersion
+`
+
+`NumMedia` looks like what we want. If we try shooting another text to our Twilio number, making sure to include a picture this time, we should see an even more critical attribute, `MediaUrl0`. If we try logging the value of `MediaURL0` we'll see the (surprise!) URL for the first picture attached to the text. It turns out Twilio hosts every picture texted to its MMS-capable numbers on a CDN (Content Delivery Network). This is great for us, since it means we don't have to worry about text blobs or any other wonky means of communication image data &mdash; we can just pass around references to the picture's online location.
+
+## Hooking Up `Socket.io`
+
+Now that we've got the URL of the pictures we're texting in to our MMS-enabled Twilio number (that in turn is communicating with our Node server via webhooks), we need to push those URLs to our client, so we can display them in a slideshow. We can do this using `socket.io`. Commenting out our Twilio code, we can do a simple test of our `io` object's `emit()` function, which communicates an event and passes associated data to each connected client, with the following snippets.
+
+In `index.js`:
+
+````javascript
+function update () {
+    io.emit("news", "Heya!");
+}
+
+setInterval(update, 2000);
+````
+
+And our `index.html` should now look like...
+
+````javascript
+<html>
+<head>
+    <title>SMS Slideshow</title>
+</head>
+<body>
+    <h1>Hello World</h1>
+
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script>
+  var socket = io();
+  socket.on('news', function (data) {
+    console.log(data);
+  });
+</script>
 
 
+</body>
+</html>
+````
+
+If we fire this up with `npm start`, navigate to `localhost:3000` and open up our browser console, we should see "Heya!" being logged every 2 seconds &mdash; just like we planned!
+
+With our basic "Hello World" example out of the way, we can adapt the code to push something we actually *want* to our client &mdash; our pictures! Let's uncomment our Twilio webhook route and tweak things a little, changing our TwiML code to respond to texts with "Text received!" and a websocket event pushing our picture to the browser.
+
+````javascript
+// Handle an incoming request from Twilio
+app.post('/message', function(request, response) {
+    //create a TwiML response object. This object helps us generate an XML
+    //string that we will ultimately return as the result of this HTTP request
+    var twiml = new twilio.TwimlResponse();
+ 
+    // prepare the TwiML response
+    twiml.message(function() {
+        this.body('Text received!');
+    });
+
+    console.log("Message: " + request.body.Body);
+    console.log(request.body.NumMedia);
+
+    if (request.body.NumMedia > 0) {
+        io.emit("picture", request.body.MediaUrl0)
+    }
+
+    // Render an XML response
+    response.type('text/xml');
+    response.send(twiml.toString());
+});
+````
+
+````javascript
+<html>
+<head>
+    <title>SMS Slideshow</title>
+</head>
+<body>
+    <h1>Hello World</h1>
 
 
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script>
+  var socket = io();
+  socket.on('picture', function (data) {
+    console.log(data);
+  });
+</script>
 
 
-
-
+</body>
+</html>
+````
 
 
