@@ -21,9 +21,6 @@ app.post('/message', function(request, response) {
         this.body('Text received!');
     });
 
-    console.log("Message: " + request.body.Body);
-    console.log(request.body.NumMedia);
-
     if (request.body.NumMedia > 0) {
         io.emit("picture", request.body.MediaUrl0)
     }

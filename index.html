@@ -1,45 +1,58 @@
 <html>
-<head>
-	<title>SMS Slideshow</title>
+	<head>
+		<title>SMS Slideshow</title>
+		<style>
+		#slides {
+			height: 100%;
+			width: 100%;
+			margin:0;
+			background-color: #4D4E53;
+		}
+		
+		img {
+			height: 100%;
+			width: auto;
+			display:none;
+		}
 
-	<style>
+		</style>
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	</head>
+	<body>		
+		<div id="slides">
+			<img src="http://cdn.wonderfulengineering.com/wp-content/uploads/2014/07/background-wallpapers-32.jpg">
+			<img src="http://cdn.wonderfulengineering.com/wp-content/uploads/2014/07/background-wallpapers-26.jpg">
+		</div>
+		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+		<script>
+		  var socket = io();
+		  socket.on('picture', function (data) {
+		    var img = $('<img>');
+		    img.attr('src', data);
+				img.appendTo('#slides');
+				
+				console.log(data);
+		  });
 
-	#slides {
-		height: 500px;
-		width: 500px;
-		background-color: gray;
-	}
+		  $(function() {
+		    
+		    var images = $('#slides img').length;
+		  	var currentImage = 0;
 
-	img {
-		height:500px;
-		width:500px;
-	}
-
-	</style>
-<script src="http://code.jquery.com/jquery-latest.min.js"></script>	
-
-</head>
-<body>
-	<h1>Hello World</h1>
-	<div id="slides"></div>
-
-
-<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-<script>
-  var socket = io();
-  socket.on('picture', function (data) {
-    var img = $('<img>');
-    img.attr('src', data);
-		img.appendTo('#slides');
-    console.log(data);
-  });
-
-
-
-
-</script>
+	      function changeSlide () {
+	      	images = $('#slides img').length;
+	      	currentImage++;
+	      	if (currentImage > images) {
+	      		currentImage = 1;
+	      	}
+      		$( "#slides img:nth-child(" + currentImage+ ")" ).fadeIn("fast").delay(6000).fadeOut('fast');
+	      }
 
 
-</body>
+	      setInterval(changeSlide, 6000);
+    	});
+
+		</script>
+	</body>
 </html>
 

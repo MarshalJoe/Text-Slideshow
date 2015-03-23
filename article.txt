@@ -105,7 +105,7 @@ ApiVersion
 
 `NumMedia` looks like what we want. If we try shooting another text to our Twilio number, making sure to include a picture this time, we should see an even more critical attribute, `MediaUrl0`. If we try logging the value of `MediaURL0` we'll see the (surprise!) URL for the first picture attached to the text. It turns out Twilio hosts every picture texted to its MMS-capable numbers on a CDN (Content Delivery Network). This is great for us, since it means we don't have to worry about text blobs or any other wonky means of communication image data &mdash; we can just pass around references to the picture's online location.
 
-## Hooking Up `Socket.io`
+## Hooking Up `socket.io`
 
 Now that we've got the URL of the pictures we're texting in to our MMS-enabled Twilio number (that in turn is communicating with our Node server via webhooks), we need to push those URLs to our client, so we can display them in a slideshow. We can do this using `socket.io`. Commenting out our Twilio code, we can do a simple test of our `io` object's `emit()` function, which communicates an event and passes associated data to each connected client, with the following snippets.
 
@@ -121,7 +121,7 @@ setInterval(update, 2000);
 
 And our `index.html` should now look like...
 
-````javascript
+````
 <html>
 <head>
     <title>SMS Slideshow</title>
@@ -144,7 +144,7 @@ And our `index.html` should now look like...
 
 If we fire this up with `npm start`, navigate to `localhost:3000` and open up our browser console, we should see "Heya!" being logged every 2 seconds &mdash; just like we planned!
 
-With our basic "Hello World" example out of the way, we can adapt the code to push something we actually *want* to our client &mdash; our pictures! Let's uncomment our Twilio webhook route and tweak things a little, changing our TwiML code to respond to texts with "Text received!" and a websocket event pushing our picture to the browser.
+With our basic "Hello World" example out of the way, we can adapt the code to push something we actually *want* to our client &mdash; our pictures! Let's uncomment our Twilio webhook route and tweak things a little, changing our TwiML code to respond to texts with "Text received!" and a websocket event pushing our picture URL to the browser.
 
 ````javascript
 // Handle an incoming request from Twilio
@@ -171,7 +171,7 @@ app.post('/message', function(request, response) {
 });
 ````
 
-````javascript
+````
 <html>
 <head>
     <title>SMS Slideshow</title>
@@ -192,5 +192,67 @@ app.post('/message', function(request, response) {
 </body>
 </html>
 ````
+
+Now that our code pushes our picture URL to the client and logs it to the browser console, we can work on accomplishing something a little more useful with that information &mdash; creating an `<img>` tag to actually display the picture.
+
+Although we could hack out creating the `<img>` tag in plain 'ol javascript, jQuery is perfect for this sort of DOM object manipulation. Searching around the web, [this StackOverflow question](http://stackoverflow.com/questions/8013792/how-to-create-a-new-img-tag-with-jquery-with-the-src-and-id-from-a-javascript-o) seems to directly address our predicament. Here's our new `index.html` adding in a few jQuery lines to create our picture tag. I've hard-coded some dimensions for our new #slides container `div` just to make sure we can tell what's going on, and to give our background some color and height before we have a picture to fill it with.
+
+````
+<html>
+    <head>
+        <title>SMS Slideshow</title>
+        <style>
+
+        #slides {
+            height: 500px;
+            width: 500px;
+            background-color: gray;
+        }
+
+        img {
+            height:500px;
+            width:500px;
+        }
+
+        </style>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script> 
+    </head>
+    <body>
+        <h1>Hello World</h1>
+        <div id="slides"></div>
+        <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+        <script>
+          var socket = io();
+          socket.on('picture', function (data) {
+            var img = $('<img>');
+            img.attr('src', data);
+            img.appendTo('#slides');
+            console.log(data);
+          });
+
+        </script>
+    </body>
+</html>
+````
+Putting up our script with `npm start` and opening up our browser to `localhost:3000` we should see our **Hello World** header and a dark gray square.
+
+![Hello World Gray Background]()
+
+But if we text in a picture we'll see...
+
+![Hello World Cat Background]()
+
+... our extremely cute, not-as-fat-as-she-looks-here Twilio Cat Model, Ella! Well done Ella.
+
+## Coding a Slideshow
+
+There are *a lot* of jQuery slideshow plugins. But they don't really allow for updating on-the-fly like we want. But our needs for a slideshow are otherwise so simple &mdash; going from slide to slide, no overlaid text, no previous or next buttons &mdash; that it's easiest if we just make it ourselves.
+
+The simplest way of going about this is using jQuery and its "nth-child()" selector to iterate through all the `<img>` tags we have nested under our `#slides` div. By changing through slides one at a time, and calculating the number of slides at each function call (properly resetting when necessary), we can 
+
+
+
+
+
 
 
